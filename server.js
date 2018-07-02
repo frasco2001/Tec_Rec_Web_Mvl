@@ -7,7 +7,7 @@ var methodOverride = require("method-override");
 
 // Import models
 var Articulos = require('./app/models/articulos.js');
-var Companias = require('./app/models/companias')
+var Companias = require('./app/models/companias.js');
 
 // Connection to DB
 var port = process.env.PORT || 8000;
@@ -80,9 +80,15 @@ apiRoutes.get('/articulos', function (req, res) {
 
 
 apiRoutes.get('/articulos/:id', function (req, res) {
-  Articulos.findById(req.params.id, function (error, articulo) {
-    if (error) return res.status(500).send(error);
+  Articulos.findById(req.params.id, function (err, articulo) {
+    if (err) return res.status(500).send(error);
     res.json(articulo);
+  });
+});
+
+apiRoutes.get('/articulosByCompanias/:nombre', function (req, res) {
+  return Articulos.find({ compania: req.params.nombre }, function (err, companias) {
+    res.json(companias);
   });
 });
 
@@ -113,12 +119,41 @@ apiRoutes.put('/articulos/:id', function (req, res) {
   });
 });
 
+apiRoutes.put('/companias/:id', function (req, res) {
+  Companias.findById(req.params.id, function (err, compania) {
+    console.log(req.body);
+    if (!req.body.nombre) {
+      res.json({ succes: false, msg: 'Hay un error al introducir la compañia' })
+    } else {
+      compania.nombre = req.body.nombre;
+      
+      compania.save(function (err) {
+        if (err) {
+          res.json({ succes: false, msg: 'La modificación de la compañia ha tenido un problema' });
+        } else {
+          res.json({ succes: true, msg: 'Compañia modificada satisfactoriamente' });
+        }
+      });
+    }
+  });
+});
+
 apiRoutes.delete('/articulos/:id', function (req, res) {
   console.log(req.params.id);
   Articulos.findByIdAndRemove(req.params.id, function (err, articulo) {
     articulo.remove(function(err) {
       if (err) return res.send(500, err.message);
       res.json({message: 'Successfully deleted'});
+    });
+  });
+});
+
+apiRoutes.delete('/companias/:id', function (req, res) {
+  console.log(req.params.id);
+  Companias.findByIdAndRemove(req.params.id, function (err, compania) {
+    compania.remove(function (err) {
+      if (err) return res.send(500, err.message);
+      res.json({ message: 'Successfully deleted' });
     });
   });
 });
